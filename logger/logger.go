@@ -13,7 +13,7 @@ type LoggerI interface {
 	Errorw(msg string, args ...interface{})
 	Debugw(msg string, args ...interface{})
 	Fatalw(msg string, args ...interface{})
-	Infofw(template string, args ...interface{})
+	Infof(template string, args ...interface{})
 	Debugf(template string, args ...interface{})
 	Errorf(template string, args ...interface{})
 	Warnf(template string, args ...interface{})
