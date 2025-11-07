@@ -35,10 +35,12 @@ type Logger struct {
 }
 
 func NewLogger() *Logger {
+	cfg := zap.NewProductionEncoderConfig()
+	cfg.EncodeTime = zapcore.ISO8601TimeEncoder
 	// set caller skip to 2
 
 	logger := zap.New(zapcore.NewCore(
-		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.NewConsoleEncoder(cfg),
 		zapcore.AddSync(zapcore.Lock(zapcore.NewMultiWriteSyncer(os.Stderr))),
 		level,
 	), zap.AddCaller(), zap.AddCallerSkip(1),
