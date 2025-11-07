@@ -37,14 +37,16 @@ type Logger struct {
 func NewLogger() *Logger {
 	cfg := zap.NewProductionEncoderConfig()
 	cfg.EncodeTime = zapcore.ISO8601TimeEncoder
+	
 	// set caller skip to 2
 
 	logger := zap.New(zapcore.NewCore(
 		zapcore.NewConsoleEncoder(cfg),
 		zapcore.AddSync(zapcore.Lock(zapcore.NewMultiWriteSyncer(os.Stderr))),
 		level,
-	), zap.AddCaller(), zap.AddCallerSkip(2),
+	), zap.AddCaller(), 
 	)
+	logger = logger.WithOptions(zap.AddCallerSkip(1))
 
 	sugar := logger.Sugar()
 
