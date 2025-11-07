@@ -8,12 +8,12 @@ import (
 )
 
 type LoggerI interface {
-	Info(msg string, args ...interface{})
-	Warn(msg string, args ...interface{})
-	Error(msg string, args ...interface{})
-	Debug(msg string, args ...interface{})
-	Fatal(msg string, args ...interface{})
-	Infof(template string, args ...interface{})
+	Infow(msg string, args ...interface{})
+	Warnw(msg string, args ...interface{})
+	Errorw(msg string, args ...interface{})
+	Debugw(msg string, args ...interface{})
+	Fatalw(msg string, args ...interface{})
+	Infofw(template string, args ...interface{})
 	Debugf(template string, args ...interface{})
 	Errorf(template string, args ...interface{})
 	Warnf(template string, args ...interface{})
@@ -45,23 +45,23 @@ func NewLogger() *Logger {
 	}
 }
 
-func (l *Logger) Info(msg string, args ...interface{}) {
+func (l *Logger) Infow(msg string, args ...interface{}) {
 	l.SugaredLogger.With(args...).Info(msg)
 }
 
-func (l *Logger) Warn(msg string, args ...interface{}) {
+func (l *Logger) Warnw(msg string, args ...interface{}) {
 	l.SugaredLogger.With(args...).Warn(msg)
 }
 
-func (l *Logger) Error(msg string, args ...interface{}) {
+func (l *Logger) Errorw(msg string, args ...interface{}) {
 	l.SugaredLogger.With(args...).Error(msg)
 }
 
-func (l *Logger) Debug(msg string, args ...interface{}) {
+func (l *Logger) Debugw(msg string, args ...interface{}) {
 	l.SugaredLogger.With(args...).Debug(msg)
 }
 
-func (l *Logger) Fatal(msg string, args ...interface{}) {
+func (l *Logger) Fatalw(msg string, args ...interface{}) {
 	l.SugaredLogger.With(args...).Fatal(msg)
 }
 func (l *Logger) Infof(template string, args ...interface{}) {
