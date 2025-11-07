@@ -43,7 +43,7 @@ func NewLogger() *Logger {
 		zapcore.NewConsoleEncoder(cfg),
 		zapcore.AddSync(zapcore.Lock(zapcore.NewMultiWriteSyncer(os.Stderr))),
 		level,
-	), zap.AddCaller(), zap.AddCallerSkip(1),
+	), zap.AddCaller(), zap.AddCallerSkip(2),
 	)
 
 	sugar := logger.Sugar()
