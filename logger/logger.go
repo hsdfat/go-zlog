@@ -13,6 +13,7 @@ type LoggerI interface {
 	Errorw(msg string, args ...interface{})
 	Debugw(msg string, args ...interface{})
 	Fatalw(msg string, args ...interface{})
+
 	Infof(template string, args ...interface{})
 	Debugf(template string, args ...interface{})
 	Errorf(template string, args ...interface{})
@@ -24,6 +25,12 @@ type LoggerI interface {
 	Error(args ...interface{})
 	Warn(args ...interface{})
 	Fatal(args ...interface{})
+
+	Infoln(args ...interface{})
+	Debugln(args ...interface{})
+	Errorln(args ...interface{})
+	Warnln(args ...interface{})
+	Fatalln(args ...interface{})
 }
 
 var (
@@ -105,6 +112,23 @@ func (l *Logger) Warn(args ...interface{}) {
 func (l *Logger) Fatal(args ...interface{}) {
 	l.SugaredLogger.Fatal(args...)
 }
+
+func (l *Logger) Infoln(args ...interface{}) {
+	l.SugaredLogger.Info(args...)
+}
+func (l *Logger) Debugln(args ...interface{}) {
+	l.SugaredLogger.Debug(args...)
+}
+func (l *Logger) Errorln(args ...interface{}) {
+	l.SugaredLogger.Error(args...)
+}
+func (l *Logger) Warnln(args ...interface{}) {
+	l.SugaredLogger.Warn(args...)
+}
+func (l *Logger) Fatalln(args ...interface{}) {
+	l.SugaredLogger.Fatal(args...)
+}
+
 var (
 	Log LoggerI = NewLogger()
 )
