@@ -31,6 +31,8 @@ type LoggerI interface {
 	Errorln(args ...interface{})
 	Warnln(args ...interface{})
 	Fatalln(args ...interface{})
+
+	With(args ...any) any
 }
 
 var (
@@ -127,6 +129,12 @@ func (l *Logger) Warnln(args ...interface{}) {
 }
 func (l *Logger) Fatalln(args ...interface{}) {
 	l.SugaredLogger.Fatal(args...)
+}
+
+func (l *Logger) With(args ...any) any {
+	return &Logger{
+		SugaredLogger: l.SugaredLogger.With(args...),
+	}
 }
 
 var (
