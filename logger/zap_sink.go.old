@@ -3,6 +3,8 @@ package logger
 import (
 	"context"
 	"os"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/hsdfat/go-zlog/sink"
@@ -117,36 +119,21 @@ func fieldValue(f zapcore.Field) any {
 		return f.Integer
 	case zapcore.Uint64Type, zapcore.Uint32Type, zapcore.Uint16Type, zapcore.Uint8Type:
 		return uint64(f.Integer)
-	case zapcore.Float64Type:
-		return float64(f.Integer)
-	case zapcore.Float32Type:
-		return float32(f.Integer)
+	case zapcore.Float64Type, zapcore.Float32Type:
+		return f.Integer
 	case zapcore.StringType:
 		return f.String
 	case zapcore.TimeType:
 		if f.Interface != nil {
-			if t, ok := f.Interface.(time.Time); ok {
-				return t
-			}
-			// Return as string if not time.Time
-			return f.Interface
+			return f.Interface.(time.Time)
 		}
 		return time.Unix(0, f.Integer)
 	case zapcore.DurationType:
 		return time.Duration(f.Integer)
 	case zapcore.ErrorType:
-		if f.Interface != nil {
-			return f.Interface
-		}
-		return nil
-	case zapcore.ReflectType:
 		return f.Interface
 	default:
-		// For any other type, just return the interface value
-		if f.Interface != nil {
-			return f.Interface
-		}
-		return f.String
+		return f.Interface
 	}
 }
 
@@ -168,4 +155,17 @@ func levelToString(level zapcore.Level) string {
 	default:
 		return "unknown"
 	}
+}
+
+// callerEncoder gets the caller information
+func getCaller(skip int) string {
+	_, file, line, ok := runtime.Caller(skip)
+	if !ok {
+		return "unknown"
+	}
+	// Trim to just filename
+	if idx := strings.LastIndex(file, "/"); idx >= 0 {
+		file = file[idx+1:]
+	}
+	return file + ":" + string(rune(line))
 }
