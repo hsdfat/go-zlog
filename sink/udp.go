@@ -14,15 +14,22 @@ type UDPSinkConfig struct {
 	Address string // "host:port" of the collector
 }
 
-// UDPSink sends each log entry as a single JSON datagram over a connected UDP socket.
+// UDPSink sends each log entry as a single JSON datagram over a reused,
+// UNCONNECTED UDP socket. An unconnected socket is deliberate: a dead or
+// unreachable collector never surfaces an ICMP "connection refused" on a
+// later write (that only happens on a *connected* socket from net.Dial), so
+// every send stays pure fire-and-forget and never triggers the BufferedSink
+// retry-backoff that would otherwise stall the logging hot path.
 type UDPSink struct {
 	config    *UDPSinkConfig
-	conn      net.Conn
+	conn      *net.UDPConn
+	raddr     *net.UDPAddr
 	isHealthy atomic.Bool
 	lastError atomic.Value
 }
 
-// NewUDPSink dials a connected UDP socket to the collector.
+// NewUDPSink resolves the collector address once and opens a single
+// unconnected UDP socket reused for every send (no per-send dial).
 func NewUDPSink(config *UDPSinkConfig) (*UDPSink, error) {
 	if config == nil {
 		return nil, fmt.Errorf("config is required")
@@ -33,11 +40,15 @@ func NewUDPSink(config *UDPSinkConfig) (*UDPSink, error) {
 	if config.Address == "" {
 		return nil, fmt.Errorf("address is required")
 	}
-	conn, err := net.Dial("udp", config.Address)
+	raddr, err := net.ResolveUDPAddr("udp", config.Address)
 	if err != nil {
-		return nil, fmt.Errorf("dial udp %s: %w", config.Address, err)
+		return nil, fmt.Errorf("resolve udp %s: %w", config.Address, err)
 	}
-	s := &UDPSink{config: config, conn: conn}
+	conn, err := net.ListenUDP("udp", nil)
+	if err != nil {
+		return nil, fmt.Errorf("open udp socket: %w", err)
+	}
+	s := &UDPSink{config: config, conn: conn, raddr: raddr}
 	s.isHealthy.Store(true)
 	return s, nil
 }
@@ -50,7 +61,9 @@ func (s *UDPSink) Write(ctx context.Context, entry *LogEntry) error {
 		s.recordError(fmt.Errorf("marshal log: %w", err))
 		return err
 	}
-	if _, err := s.conn.Write(payload); err != nil {
+	// Fire-and-forget to a fixed addr on the unconnected socket: never blocks
+	// and never returns ICMP "connection refused" for a dead collector.
+	if _, err := s.conn.WriteToUDP(payload, s.raddr); err != nil {
 		s.recordError(fmt.Errorf("udp write: %w", err))
 		return err
 	}
