@@ -86,7 +86,7 @@ func (c *zapSinkCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 
 	// Add caller information if present
 	if ent.Caller.Defined {
-		entry.Caller = ent.Caller.String()
+		entry.Caller = ent.Caller.TrimmedPath()
 	}
 
 	// Add stack trace if present
