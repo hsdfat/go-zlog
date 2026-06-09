@@ -38,6 +38,7 @@ type LoggerI interface {
 
 var (
 	level       = zap.NewAtomicLevel()
+	remoteLevel = zap.NewAtomicLevelAt(zapcore.DebugLevel) // sink-only level, independent from console
 	remoteSinks []sink.Sink
 )
 
@@ -50,6 +51,7 @@ type Logger struct {
 type LoggerConfig struct {
 	EnableConsole bool        // Enable console output (default: true)
 	RemoteSinks   []sink.Sink // Optional remote sinks (e.g., Loki, HTTP)
+	RemoteLevel   string      // Initial log level for sink cores only; empty = DebugLevel (ship everything)
 }
 
 // NewLogger creates a new logger with default configuration (console only)
@@ -82,11 +84,16 @@ func NewLoggerWithConfig(config *LoggerConfig) *Logger {
 		cores = append(cores, consoleCore)
 	}
 
-	// Add remote sink cores
+	// Add remote sink cores — use remoteLevel so sink level is independent of console.
 	if config.RemoteSinks != nil {
 		remoteSinks = config.RemoteSinks
+		if config.RemoteLevel != "" {
+			if zapLvl, err := zapcore.ParseLevel(config.RemoteLevel); err == nil {
+				remoteLevel.SetLevel(zapLvl)
+			}
+		}
 		for _, s := range config.RemoteSinks {
-			sinkCore := newZapSinkCore(s, zapcore.NewJSONEncoder(cfg), level)
+			sinkCore := newZapSinkCore(s, zapcore.NewJSONEncoder(cfg), remoteLevel)
 			cores = append(cores, sinkCore)
 		}
 	}
@@ -193,4 +200,14 @@ func SetLevel(l string) {
 		zapLevel = zapcore.InfoLevel
 	}
 	level.SetLevel(zapLevel)
+}
+
+// SetRemoteLevel changes the log level for sink cores only, leaving the console
+// level untouched. Useful for per-NF sink level control via netconf.
+func SetRemoteLevel(l string) {
+	zapLevel, err := zapcore.ParseLevel(l)
+	if err != nil {
+		zapLevel = zapcore.InfoLevel
+	}
+	remoteLevel.SetLevel(zapLevel)
 }
